@@ -1,0 +1,4 @@
+*.asm
+!comp_*.asm
+.DS_Store
+.vscode/
