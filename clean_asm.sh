@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Find all .asm files in current directory
-asm_files=$(find . -maxdepth 1 -name "*.asm")
+# Find all .asm files recursively in current directory and subdirectories
+asm_files=$(find . -name "*.asm")
 
 if [ -z "$asm_files" ]; then
-    echo "No .asm files found in current directory"
+    echo "No .asm files found in current directory or subdirectories"
     exit 0
 fi
 
@@ -13,7 +13,7 @@ echo "$asm_files"
 echo ""
 
 # Ask for confirmation
-read -p "Are you sure you want to remove these files? (y/N): " -n 1 -r
+read -p "Are you sure you want to remove these files? This will delete .asm files from all subdirectories. (y/N): " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo "Operation cancelled"
