@@ -193,18 +193,18 @@ func main() {
 	var dstF *os.File
 	if _, err := os.Stat(dstFile); os.IsNotExist(err) {
 		dstF, err = os.Create(dstFile)
-		defer dstF.Close()
 		if err != nil {
 			fmt.Println("Error creating destination file", err)
 			os.Exit(1)
 		}
+		defer dstF.Close()
 	} else {
 		dstF, err = os.OpenFile(dstFile, os.O_WRONLY, 0644)
-		defer dstF.Close()
 		if err != nil {
 			fmt.Println("Error opening destination file", err)
 			os.Exit(1)
 		}
+		defer dstF.Close()
 	}
 
 	// rawSourceLines := []string{}
@@ -405,23 +405,24 @@ func parseInstruction(index int, fileName string, line string) (*Instruction, er
 	if pl == 1 && slices.Contains(validAL, parts[0]) {
 		al := ALTypeAdd
 		rawAl := parts[0]
-		if rawAl == "add" {
+		switch rawAl {
+		case "add":
 			al = ALTypeAdd
-		} else if rawAl == "sub" {
+		case "sub":
 			al = ALTypeSub
-		} else if rawAl == "neg" {
+		case "neg":
 			al = ALTypeNeg
-		} else if rawAl == "eq" {
+		case "eq":
 			al = ALTypeEq
-		} else if rawAl == "gt" {
+		case "gt":
 			al = ALTypeGt
-		} else if rawAl == "lt" {
+		case "lt":
 			al = ALTypeLt
-		} else if rawAl == "and" {
+		case "and":
 			al = ALTypeAnd
-		} else if rawAl == "or" {
+		case "or":
 			al = ALTypeOr
-		} else if rawAl == "not" {
+		case "not":
 			al = ALTypeNot
 		}
 		return &Instruction{
@@ -437,58 +438,61 @@ func parseInstruction(index int, fileName string, line string) (*Instruction, er
 	// command type parsing
 	ct := CommandTypePush
 	rawCt := strings.ToLower(parts[0])
-	if rawCt == "pop" {
+	switch rawCt {
+	case "pop":
 		ct = CommandTypePop
-	} else if rawCt == "push" {
+	case "push":
 		ct = CommandTypePush
-	} else if rawCt == "label" {
+	case "label":
 		ct = CommandTypeLabel
-	} else if rawCt == "goto" {
+	case "goto":
 		ct = CommandTypeGOTO
-	} else if rawCt == "if-goto" {
+	case "if-goto":
 		ct = CommandTypeIf
-	} else if rawCt == "function" {
+	case "function":
 		ct = CommandTypeFunction
-	} else if rawCt == "return" {
+	case "return":
 		ct = CommandTypeReturn
-	} else if rawCt == "call" {
+	case "call":
 		ct = CommandTypeCall
-	} else {
+	default:
 		return nil, fmt.Errorf("invalid command type: %s", parts[0])
 	}
 
 	// arg1 parsing
 	st := SegmentTypeConstant
 	arg1 := ""
-	if ct == CommandTypePush || ct == CommandTypePop {
+	switch ct {
+	case CommandTypePush, CommandTypePop:
 		rawSt := strings.ToLower(parts[1])
 		arg1 = rawSt
-		if rawSt == "constant" {
+		switch rawSt {
+		case "constant":
 			st = SegmentTypeConstant
-		} else if rawSt == "local" {
+		case "local":
 			st = SegmentTypeLocal
-		} else if rawSt == "argument" {
+		case "argument":
 			st = SegmentTypeArgument
-		} else if rawSt == "this" {
+		case "this":
 			st = SegmentTypeThis
-		} else if rawSt == "that" {
+		case "that":
 			st = SegmentTypeThat
-		} else if rawSt == "static" {
+		case "static":
 			st = SegmentTypeStatic
-		} else if rawSt == "temp" {
+		case "temp":
 			st = SegmentTypeTemp
-		} else if rawSt == "pointer" {
+		case "pointer":
 			st = SegmentTypePointer
-		} else {
+		default:
 			return nil, fmt.Errorf("invalid arg1 segment type: %s", parts[1])
 		}
-	} else if ct == CommandTypeLabel || ct == CommandTypeGOTO || ct == CommandTypeIf || ct == CommandTypeFunction || ct == CommandTypeCall {
+	case CommandTypeLabel, CommandTypeGOTO, CommandTypeIf, CommandTypeFunction, CommandTypeCall:
 		arg1 = parts[1]
-	} else if ct == CommandTypeReturn {
+	case CommandTypeReturn:
 		if len(parts) > 1 {
 			return nil, fmt.Errorf("invalid arg1 return, no argument expected")
 		}
-	} else {
+	default:
 		return nil, fmt.Errorf("invalid command type: %s", parts[0])
 	}
 
@@ -596,13 +600,14 @@ func (i *Instruction) genArithmetic() ([]string, error) {
 	switch i.ALType {
 	case ALTypeAdd, ALTypeSub, ALTypeAnd, ALTypeOr:
 		op := ""
-		if i.ALType == ALTypeAdd {
+		switch i.ALType {
+		case ALTypeAdd:
 			op = "M=D+M"
-		} else if i.ALType == ALTypeSub {
+		case ALTypeSub:
 			op = "M=M-D"
-		} else if i.ALType == ALTypeAnd {
+		case ALTypeAnd:
 			op = "M=D&M"
-		} else if i.ALType == ALTypeOr {
+		case ALTypeOr:
 			op = "M=D|M"
 		}
 		lines = append(lines, "@SP")
@@ -626,11 +631,12 @@ func (i *Instruction) genArithmetic() ([]string, error) {
 		lines = append(lines, "A=A-1")
 		lines = append(lines, "D=M-D")
 		lines = append(lines, i.getLogicalARegister(id+"_true"))
-		if i.ALType == ALTypeEq {
+		switch i.ALType {
+		case ALTypeEq:
 			lines = append(lines, "D;JEQ")
-		} else if i.ALType == ALTypeGt {
+		case ALTypeGt:
 			lines = append(lines, "D;JGT")
-		} else if i.ALType == ALTypeLt {
+		case ALTypeLt:
 			lines = append(lines, "D;JLT")
 		}
 		lines = append(lines, "@SP")
